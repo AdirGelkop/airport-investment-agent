@@ -48,7 +48,7 @@ def _client() -> Tuple[OpenAI, str]:
     if not key:
         raise RuntimeError("LLM_API_KEY is missing. Copy .env.example to .env and add your key.")
     base = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
-    model = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+    model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
     return OpenAI(api_key=key, base_url=base), model
 
 

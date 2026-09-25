@@ -60,7 +60,7 @@ peak-month load factor and runway strain in the national top 20%; passenger grow
 is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change in chat.
 
 ## 5. Where and how AI is used
-- **LLM (Groq, llama-3.3-70b by default)**: understands the question, resolves entities ("LA" → LAX),
+- **LLM (Groq, openai/gpt-oss-120b by default)**: understands the question, resolves entities ("LA" → LAX),
   chooses tools and arguments, and writes the explanation with assumptions.
 - **Not AI**: all numbers, rankings and scores (Python, unit-tested). The system prompt forbids stating any
   number that is not in a tool result, and requires an "Assumptions & uncertainty" section.

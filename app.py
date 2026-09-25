@@ -40,7 +40,7 @@ with st.sidebar:
             st.session_state.pending = q
     if st.button("🗑️ New conversation", use_container_width=True):
         st.session_state.messages = []
-    st.caption(f"Model: {os.getenv('LLM_MODEL', 'llama-3.3-70b-versatile')}")
+    st.caption(f"Model: {os.getenv('LLM_MODEL', 'openai/gpt-oss-120b')}")
 
 st.session_state.setdefault("messages", [])
 
