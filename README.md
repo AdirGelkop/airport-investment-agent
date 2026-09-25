@@ -3,7 +3,8 @@
 Chat agent that helps analysts find US airports where adding terminal / flight capacity is most likely to pay off.
 Numbers come from **public APIs + deterministic Python scoring**; the LLM only picks tools and explains results.
 
-See **[docs/DESIGN.md](docs/DESIGN.md)** for scoring methodology, tradeoffs and where AI is used.
+See **[docs/DESIGN.md](docs/DESIGN.md)** for scoring methodology, tradeoffs and where AI is used,
+and **[docs/SAMPLES.md](docs/SAMPLES.md)** for real answers to the example questions (incl. a follow-up).
 
 ## Quick start (macOS / Linux, Python 3.9+)
 ```bash

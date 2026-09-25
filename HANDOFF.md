@@ -1,36 +1,40 @@
 # HANDOFF - read this first when resuming
 
 **Team:** Adir (lead, runs everything locally) · Claude (plan + build) · Gemini (review / architecture)
-**Deadline:** 24h from task receipt (Adir owns the clock)
 **Repo:** github.com/AdirGelkop/airport-investment-agent (public; Claude GitHub App installed → Claude can push)
 **Local path (Adir):** /Users/adirgelkop/Desktop/Everything/Assignments/airport-investment-agent
+**Deadline:** 24h from task receipt (Adir owns the clock)
 
-## Status
-| Milestone | State |
-|---|---|
-| M0 Scaffold | done |
-| M1 Data layer | done; cache committed (BTS May 2025-Apr 2026, OurAirports, OpenSky ANC 17-23 Sep 2026) |
-| M2 Scoring + tests | done; signals calibrated to national percentiles |
-| M3 Agent | done; real run OK with Groq `openai/gpt-oss-120b` (llama-3.3-70b not on free tier) |
-| M4 UI | done; tested by Adir incl. ~8 rapid questions (retries absorb rate limits) |
-| M5 Docs | DESIGN.md draft; finalize + sample answers + submission notes |
+## Checklist
+### Done
+- [x] Data layer: BTS T-100 (May 2025-Apr 2026), OurAirports, OpenSky ANC (17-23 Sep 2026) - all cached in repo
+- [x] Deterministic scoring + 4 unit tests (Expansion Score, Congestion Index, unmet demand, route mix)
+- [x] Agent: 6 tools, Groq `openai/gpt-oss-120b`, fallback `gpt-oss-20b`, retries on rate limits
+- [x] Guardrails: NO_DATA ≠ 0, no LLM arithmetic, assumptions section in every answer
+- [x] Streamlit chat UI with "Data & calculations" audit panel - tested by Adir (~8 rapid questions OK)
+- [x] Gemini architecture review - approved; scale weight 20% kept on purpose (documented)
+- [x] docs: DESIGN.md (methodology, tradeoffs, AI use, verification), SAMPLES.md, SUBMISSION_NOTES.md, README
 
-## Key real-data results (for sanity)
-- New England top 5: BGR, PWM, BTV, BOS, BDL (BOS 4th: scale weight only 20% - judgment call).
+### Remaining (must)
+- [ ] Final read-through of DESIGN.md + SUBMISSION_NOTES.md by Adir (can he explain every line?)
+- [ ] Submit: upload files (or repo zip) + paste docs/SUBMISSION_NOTES.md into the notes box
+
+### Optional (bonus)
+- [ ] Voice input (Streamlit audio input → Groq Whisper → same agent)
+
+## Key real-data results
+- New England top 5: BGR, PWM, BTV, BOS, BDL.
 - LAX Congestion 90.3 vs SNA 78.8 (371 vs 283 movements/runway/day).
 - SFO unmet: ~1.03M seats/yr ≈ 16.6 daily departures to reach 80% LF.
-- ANC long-haul (≥2,500 mi): 54.4% of airline flights; 35.9% excl. known cargo operators; 79% destination coverage.
+- ANC long-haul (≥2,500 mi): 54.4% (35.9% excl. known cargo); at 3,000 mi: 36.0%.
 
-## Fixed after first real LLM run
-- LLM said "0% long-haul" when data was missing → tool now returns NO_DATA; prompt: missing ≠ zero.
-- LLM invented seat totals for SFO → tool returns totals; prompt forbids own arithmetic.
+## How to resume (any of us)
+- Adir: `cd <local path> && git pull && source .venv/bin/activate && streamlit run app.py`
+- Claude / Gemini: read this file, then `docs/DESIGN.md`; code map is in README.md.
+- Everything tunable is in `config.py`; every number the agent states comes from `scoring.py` via `tools.py`.
 
-## Rate limits (Groq free tier: 8K tokens/min on gpt-oss-120b)
-- SDK auto-retries 429s (max_retries=5); then falls back to `LLM_FALLBACK_MODEL` (gpt-oss-20b, separate quota).
-- Only last 2 exchanges sent as history; compact JSON tool results.
-
-## Next steps
-1. ~~UI test~~ done. Adir: `python cli.py --samples --save docs/SAMPLES.md` → push.
-2. ~~Gemini review~~ done: architecture approved; scale 20% kept as deliberate choice (asymmetric opportunities) - documented in DESIGN.md.
-3. Finalize DESIGN.md, record sample answers (docs/SAMPLES.md), write submission notes.
-4. Bonus if time: voice input (Streamlit audio input + Groq Whisper).
+## Interview prep (likely questions)
+- Why percentiles and these weights? → comparable units; judgment call; config.py; min_passengers filter.
+- Why is BGR above BOS? → growth + full flights + supply gap; scale only 20% by design.
+- How do you stop hallucinated numbers? → tools compute; prompt rules; NO_DATA; audit panel; residual risk stated.
+- What would you do with more time? → delay data, FAA capacity data, number-verification check, analyst weight tuning.

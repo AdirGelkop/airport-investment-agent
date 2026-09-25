@@ -85,7 +85,20 @@ is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change
 - Flown passengers only: travelers who could not get a seat are invisible → unmet demand is a proxy.
 - Runway counts from OurAirports; movements include only BTS-reporting carriers (no general aviation).
 - Out of scope: construction cost, airport finances, fares, gate counts, local regulation.
+- Free LLM tier (Groq, 8K tokens/min): the SDK retries on rate limits, then falls back to a smaller model
+  (answer is labelled). Answers can take 10-30 s when several questions are asked back to back.
 
-## 8. Next steps (if continued)
+## 8. Verification
+- Unit tests (`pytest`) on synthetic data for KPI math, ranking determinism, unmet demand, distance bands.
+- Sanity check against known airport sizes: 12-month enplanements SFO 26.6M, LAX 36.6M, BOS 21.0M
+  (≈ half of each airport's total passengers, as expected for departing-only counts); LAX ≈ 371 movements per runway per day.
+- Sample answers (`docs/SAMPLES.md`) audited number-by-number against tool output.
+- Guardrails added after testing: the LLM first reported "0% long-haul" when OpenSky data was missing, and once
+  invented seat totals. Fixes: tools return explicit `NO_DATA` and full totals; the prompt forbids own arithmetic.
+  Residual risk: the LLM may still paraphrase a derived figure; the "Data & calculations" panel under every
+  answer lets the analyst verify.
+
+## 9. Next steps (if continued)
 Delay data (BTS on-time / FAA) in the Congestion Index · FAA enplanement & capacity reports ·
-weight tuning with analysts · voice input · scenario analysis (e.g. "what if seats grow 10%").
+weight tuning with analysts · voice input · scenario analysis (e.g. "what if seats grow 10%") ·
+an automated check that every number in an answer appears in the tool output.
