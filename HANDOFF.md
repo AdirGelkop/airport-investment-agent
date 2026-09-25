@@ -12,7 +12,7 @@
 | M1 Data layer | done; cache committed (BTS May 2025-Apr 2026, OurAirports, OpenSky ANC 17-23 Sep 2026) |
 | M2 Scoring + tests | done; signals calibrated to national percentiles |
 | M3 Agent | done; real run OK with Groq `openai/gpt-oss-120b` (llama-3.3-70b not on free tier) |
-| M4 UI | code done; **needs real run by Adir** (`streamlit run app.py`) |
+| M4 UI | done; tested by Adir incl. ~8 rapid questions (retries absorb rate limits) |
 | M5 Docs | DESIGN.md draft; finalize + sample answers + submission notes |
 
 ## Key real-data results (for sanity)
@@ -30,7 +30,7 @@
 - Only last 2 exchanges sent as history; compact JSON tool results.
 
 ## Next steps
-1. Adir: `streamlit run app.py`, run 4 samples + 1-2 follow-ups; report issues.
+1. ~~UI test~~ done. Adir: `python cli.py --samples --save docs/SAMPLES.md` → push.
 2. Gemini review of DESIGN.md + scoring weights.
 3. Finalize DESIGN.md, record sample answers (docs/SAMPLES.md), write submission notes.
 4. Bonus if time: voice input (Streamlit audio input + Groq Whisper).
