@@ -162,6 +162,7 @@ def route_mix(flights: List[dict], origin_icao: str, coords: Dict[str, tuple],
         "flights_total_raw": len(flights),
         "flights_analyzed": n,
         **counts,
+        "destination_coverage_pct": round(100 * n / (n + counts["excluded_unknown_destination"]), 1),
         "long_haul_threshold_miles": long_haul_miles,
         "long_haul_share_pct": round(100 * (df["miles"] >= long_haul_miles).mean(), 1),
         "long_haul_share_excl_known_cargo_pct": (

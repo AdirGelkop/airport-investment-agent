@@ -43,6 +43,7 @@ OPENSKY_DAYS = 7
 # "excluding known cargo operators" split; not exhaustive).
 CARGO_CALLSIGN_PREFIXES = {
     "FDX", "UPS", "GTI", "CKS", "CLX", "NCA", "ABX", "ATN", "PAC", "CKK", "CAO",
+    "AER", "NAC", "ABW", "BCS", "BOX", "GEC", "MPH", "SQC", "WGN", "NCR", "KYE", "CSS", "YZR", "AHK",
 }
 
 # ---------- Regions (US Census divisions + a few common names) ----------
