@@ -75,7 +75,11 @@ if question:
             try:
                 answer, trace = agent.ask(history)
             except Exception as e:  # noqa: BLE001
-                answer, trace = f"⚠️ {type(e).__name__}: {e}", []
+                if type(e).__name__ == "RateLimitError":
+                    answer = "⚠️ The free LLM tier's per-minute limit was reached. Wait ~30 seconds and ask again."
+                else:
+                    answer = f"⚠️ {type(e).__name__}: {e}"
+                trace = []
         st.markdown(answer)
         if trace:
             show_trace(trace)

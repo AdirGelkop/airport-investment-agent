@@ -6,7 +6,7 @@ import os
 from typing import Dict, List, Tuple
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 import config
 import tools
@@ -45,6 +45,7 @@ METHODOLOGY (for explaining, do not recompute)
 """
 
 MAX_STEPS = 6
+HISTORY_MESSAGES = 4  # last 2 exchanges: enough for follow-ups, small enough for free-tier token limits
 
 
 def _client() -> Tuple[OpenAI, str]:
@@ -53,22 +54,39 @@ def _client() -> Tuple[OpenAI, str]:
         raise RuntimeError("LLM_API_KEY is missing. Copy .env.example to .env and add your key.")
     base = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
     model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
-    return OpenAI(api_key=key, base_url=base), model
+    # max_retries: the SDK backs off and retries automatically on 429 rate limits
+    return OpenAI(api_key=key, base_url=base, max_retries=5), model
+
+
+def _complete(client: OpenAI, model: str, messages: List[Dict]):
+    """One LLM call; on a persistent rate limit, retry once with the fallback model."""
+    kwargs = dict(messages=messages, tools=tools.SCHEMAS, tool_choice="auto", temperature=0.1)
+    try:
+        return client.chat.completions.create(model=model, **kwargs), model
+    except RateLimitError:
+        fallback = os.getenv("LLM_FALLBACK_MODEL", "openai/gpt-oss-20b")
+        if not fallback or fallback == model:
+            raise
+        return client.chat.completions.create(model=fallback, **kwargs), fallback
 
 
 def ask(history: List[Dict[str, str]]) -> Tuple[str, List[Dict]]:
     """history = [{"role": "user"|"assistant", "content": str}, ...] (text only, keeps tokens low).
     Returns (answer_markdown, trace) where trace lists every tool call with args and result."""
     client, model = _client()
-    messages: List[Dict] = [{"role": "system", "content": SYSTEM_PROMPT}] + history[-10:]
+    messages: List[Dict] = [{"role": "system", "content": SYSTEM_PROMPT}] + history[-HISTORY_MESSAGES:]
     trace: List[Dict] = []
+    used_models = set()
 
     for _ in range(MAX_STEPS):
-        resp = client.chat.completions.create(
-            model=model, messages=messages, tools=tools.SCHEMAS, tool_choice="auto", temperature=0.1)
+        resp, used = _complete(client, model, messages)
+        used_models.add(used)
         msg = resp.choices[0].message
         if not msg.tool_calls:
-            return msg.content or "", trace
+            answer = msg.content or ""
+            if used_models - {model}:
+                answer += f"\n\n_(Answered with fallback model {', '.join(used_models - {model})} due to rate limits.)_"
+            return answer, trace
 
         messages.append({"role": "assistant", "content": msg.content or "", "tool_calls": [
             {"id": tc.id, "type": "function",
@@ -82,6 +100,6 @@ def ask(history: List[Dict[str, str]]) -> Tuple[str, List[Dict]]:
             result = tools.run_tool(tc.function.name, args)
             trace.append({"tool": tc.function.name, "args": args, "result": result})
             messages.append({"role": "tool", "tool_call_id": tc.id,
-                             "content": json.dumps(result, default=str)})
+                             "content": json.dumps(result, default=str, separators=(",", ":"))})
 
     return "I could not finish within the tool-call limit. Please narrow the question.", trace

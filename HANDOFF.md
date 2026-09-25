@@ -25,6 +25,10 @@
 - LLM said "0% long-haul" when data was missing → tool now returns NO_DATA; prompt: missing ≠ zero.
 - LLM invented seat totals for SFO → tool returns totals; prompt forbids own arithmetic.
 
+## Rate limits (Groq free tier: 8K tokens/min on gpt-oss-120b)
+- SDK auto-retries 429s (max_retries=5); then falls back to `LLM_FALLBACK_MODEL` (gpt-oss-20b, separate quota).
+- Only last 2 exchanges sent as history; compact JSON tool results.
+
 ## Next steps
 1. Adir: `streamlit run app.py`, run 4 samples + 1-2 follow-ups; report issues.
 2. Gemini review of DESIGN.md + scoring weights.
