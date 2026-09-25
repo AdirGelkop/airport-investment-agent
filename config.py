@@ -31,9 +31,7 @@ CONGESTION_COMPONENTS = ["load_factor", "peak_load_factor", "runway_strain"]
 
 # ---------- Unmet-demand logic ----------
 TARGET_LOAD_FACTOR = 0.80   # "comfortable" load factor used to size missing capacity
-HIGH_LOAD_FACTOR = 0.85     # annual LF above this = little spare seat capacity
-HIGH_PEAK_LOAD_FACTOR = 0.90
-HIGH_PERCENTILE = 80        # "top 20% nationally"
+HIGH_PERCENTILE = 80        # signal thresholds are relative: "top 20% nationally"
 
 # ---------- Route distance ----------
 # Long-haul default ~ 4,000 km (Eurocontrol-style market segment), in statute miles.

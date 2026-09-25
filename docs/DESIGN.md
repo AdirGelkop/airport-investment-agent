@@ -53,7 +53,8 @@ Percentiles make different units comparable and keep one outlier from dominating
 
 **Unmet demand** = seats needed to bring the 12-month load factor down to 80%
 (`passengers / 0.80 − seats`), converted to daily flights with the airport's average seats per departure.
-Explained by rule-based signals (LF ≥ 85%, peak LF ≥ 90%, demand > supply growth, runway strain top 20%, vs-2019 recovery).
+Explained by rule-based signals, relative to all US airports so thresholds stay calibrated: load factor,
+peak-month load factor and runway strain in the national top 20%; passenger growth vs seat growth; traffic vs 2019.
 
 **Long-haul share** = share of observed airline departures (OpenSky, last 7 days) whose great-circle distance
 is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change in chat.

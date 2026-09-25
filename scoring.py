@@ -95,13 +95,15 @@ def unmet_capacity(row: pd.Series, target_lf: float = config.TARGET_LOAD_FACTOR)
 def unmet_signals(row: pd.Series) -> List[str]:
     """Deterministic, human-readable reasons behind (or against) unmet demand."""
     s = []
-    lf, plf = row["load_factor"], row["peak_load_factor"]
-    if lf >= config.HIGH_LOAD_FACTOR:
-        s.append(f"Flights are {lf:.0%} full on average (>= {config.HIGH_LOAD_FACTOR:.0%}): little spare seat capacity.")
+    hi = config.HIGH_PERCENTILE
+    lf, p = row["load_factor"], row["pct_load_factor"]
+    if p >= hi:
+        s.append(f"Flights are {lf:.1%} full on average, fuller than {p:.0f}% of US airports: little spare seat capacity.")
     else:
-        s.append(f"Average load factor is {lf:.0%} (< {config.HIGH_LOAD_FACTOR:.0%}): some spare seats on average.")
-    if plf == plf and plf >= config.HIGH_PEAK_LOAD_FACTOR:
-        s.append(f"Peak month ({row['peak_month']}) reached {plf:.0%}: seasonal capacity crunch.")
+        s.append(f"Average load factor {lf:.1%} (fuller than {p:.0f}% of US airports): some spare seats remain.")
+    if row["pct_peak_load_factor"] >= hi:
+        s.append(f"Peak month ({row['peak_month']}) reached {row['peak_load_factor']:.1%} "
+                 f"(top {100 - hi}% nationally): seasonal capacity crunch.")
     g, sg = row["pax_growth"], row["seat_growth"]
     if g == g and sg == sg:
         verb = "outpacing" if g > sg else "not outpacing"
@@ -111,10 +113,13 @@ def unmet_signals(row: pd.Series) -> List[str]:
                  f"(top {100 - config.HIGH_PERCENTILE}% nationally): the airfield limits adding flights.")
     v = row["pax_vs_2019"]
     if v == v:
-        if v < -0.05:
-            s.append(f"Traffic is still {v:.0%} vs 2019: if flights are full, supply (not demand) is the bottleneck.")
+        if v < -0.01 and p >= hi:
+            s.append(f"Passengers are still {-v:.1%} below 2019 while flights are this full: "
+                     f"seats offered, not travel demand, look like the constraint.")
+        elif v < -0.01:
+            s.append(f"Passengers are still {-v:.1%} below 2019: demand has not fully recovered.")
         else:
-            s.append(f"Traffic is {v:+.0%} vs 2019 (fully recovered).")
+            s.append(f"Passengers are {v:+.1%} vs 2019 (recovered).")
     return s
 
 
