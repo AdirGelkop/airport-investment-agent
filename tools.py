@@ -138,6 +138,10 @@ def analyze_unmet_demand(code: str, target_load_factor: float = config.TARGET_LO
         **_context(k),
         "airport": _airport_row(code, r),
         "unmet_demand_estimate": {
+            "passengers_12m": int(r["pax"]),
+            "seats_offered_12m": int(r["seats"]),
+            "seats_needed_at_target_lf": int(round(r["pax"] / target_load_factor)),
+            "avg_seats_per_departure": round(float(r["seats_per_dep"])),
             **u,
             "method": f"Seats needed so that 12-month load factor falls to {target_load_factor:.0%}: "
                       f"passengers / {target_load_factor:.2f} - seats offered; flights = seats / avg seats per "
@@ -161,6 +165,15 @@ def route_distance_mix(code: str, long_haul_miles: float = config.LONG_HAUL_MILE
         return {"error": f"{code} not found."}
     flights, used, notes = data_sources.fetch_opensky_departures(r["icao"], int(min(days, 7)))
     mix = scoring.route_mix(flights, r["icao"], coords, long_haul_miles)
+    if mix["flights_analyzed"] == 0:
+        return {
+            "airport": code, "status": "NO_DATA",
+            "instruction": "The long-haul share CANNOT be computed: no observed flights available. "
+                           "Do NOT report 0%. Tell the user the data is missing and why.",
+            "notes": notes,
+            "bts_avg_flight_distance_miles_12m": round(r["avg_stage_miles"]),
+            "bts_note": "Average distance is a mean across all flights (incl. cargo); it cannot give a share.",
+        }
     return {
         "airport": code, "icao": r["icao"],
         "source": "OpenSky Network ADS-B departures (sample of observed flights), great-circle distance",
