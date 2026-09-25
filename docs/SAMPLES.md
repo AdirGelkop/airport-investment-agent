@@ -3,6 +3,15 @@
 Produced by `python cli.py --samples --save docs/SAMPLES.md`. Numbers come from tools; the LLM wrote the text.
 
 
+
+> **Audit note (by us, after generation):** every number in the tables and headline answers was checked
+> against the tool output shown in the app's "Data & calculations" panel and is correct. Two minor LLM
+> paraphrasing errors were found and are left visible on purpose:
+> 1. New England: the text says three airports show demand outpacing supply; the tool data shows four (BDL too).
+> 2. Anchorage follow-up (first answer): "≈ 26 % of raw records" without a destination is not a tool figure;
+>    the tool reports 365 of 2,730 flights without a known destination and 79.4 % destination coverage.
+> This is the residual risk described in DESIGN.md §8.
+
 ---
 
 ## Q: Which airports in New England are strong candidates for terminal expansion?
