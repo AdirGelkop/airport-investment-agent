@@ -31,6 +31,6 @@
 
 ## Next steps
 1. ~~UI test~~ done. Adir: `python cli.py --samples --save docs/SAMPLES.md` → push.
-2. Gemini review of DESIGN.md + scoring weights.
+2. ~~Gemini review~~ done: architecture approved; scale 20% kept as deliberate choice (asymmetric opportunities) - documented in DESIGN.md.
 3. Finalize DESIGN.md, record sample answers (docs/SAMPLES.md), write submission notes.
 4. Bonus if time: voice input (Streamlit audio input + Groq Whisper).

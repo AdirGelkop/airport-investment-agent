@@ -48,6 +48,10 @@ Universe: US airports with ≥ 10,000 yearly enplanements (FAA "primary" thresho
 **Expansion Score (0-100)** = weighted average of national percentile ranks:
 scale 20%, load factor 25%, passenger growth 20%, supply gap 20%, runway strain 15%.
 Percentiles make different units comparable and keep one outlier from dominating.
+Scale is deliberately only 20%: the goal is to surface *asymmetric* opportunities (full, fast-growing,
+supply-constrained airports), not just re-list the largest hubs. E.g. in New England, Bangor (BGR) ranks above
+Boston (BOS). Analysts who care only about large hubs can filter (`min_passengers`, supported in chat) or change
+the weights in `config.py`.
 
 **Congestion Index (0-100)** = average percentile of load factor, peak-month load factor, runway strain.
 
