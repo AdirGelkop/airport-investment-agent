@@ -7,6 +7,7 @@ from openai import RateLimitError
 
 import agent
 import config
+import data_sources
 import scoring
 import tools
 from cli import SAMPLES
@@ -28,6 +29,15 @@ st.session_state.setdefault("messages", [])  # chat history: {"role", "content",
 with st.sidebar:
     st.title("Airport Investment Agent")
     st.caption(f"Data window: **{kpis.attrs['window']}** · {kpis.attrs['universe_size']} US commercial airports")
+
+    # Be clear that long-haul answers use cached OpenSky days, not live data
+    cached_days = sorted(data_sources.OPENSKY_DIR.glob("*_*.json"))
+    if cached_days:
+        icao_to_code = dict(zip(kpis["icao"], kpis.index))
+        airports = sorted({icao_to_code.get(f.stem.split("_")[0], f.stem.split("_")[0]) for f in cached_days})
+        days = sorted({f.stem.split("_")[1] for f in cached_days})
+        st.caption(f"Long-haul data: cached OpenSky days for {', '.join(airports)} ({days[0]} to {days[-1]}). "
+                   f"Add OpenSky credentials in `.env` to fetch other airports.")
     st.markdown(
         "**How it works**\n"
         "- Numbers come from public data (BTS T-100, OurAirports, OpenSky) and deterministic Python scoring.\n"
