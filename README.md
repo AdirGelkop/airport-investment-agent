@@ -1,6 +1,6 @@
 # Airport Investment Intelligence Agent
 
-A chat agent that helps analysts find US airports where adding terminal and flight capacity is most likely to pay off.
+An AI agent that helps analysts identify US airports where renovations would be most profitable, based on increased flight and passenger capacity.
 All numbers come from public data and deterministic Python scoring. The LLM only chooses which tool to run and explains the result.
 
 - [docs/DESIGN.md](docs/DESIGN.md): scoring methodology, tradeoffs, where AI is used
