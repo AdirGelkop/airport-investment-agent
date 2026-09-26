@@ -85,6 +85,8 @@ is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change
 - **Not AI**: all numbers, rankings and scores (Python, unit-tested). The system prompt forbids stating any
   number that is not in a tool result, and requires an "Assumptions & uncertainty" section.
 - Follow-ups: the chat history is sent back to the LLM, which can reuse earlier numbers or call tools again.
+- **Speech-to-text (Groq Whisper, bonus)**: a question recorded in the sidebar is transcribed and then handled
+  exactly like a typed question (`voice.py`).
 
 ## 6. Key tradeoffs
 | Choice | Gain | Cost |
@@ -95,12 +97,14 @@ is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change
 | OpenSky sample for routes | Only free per-flight destination source | Coverage gaps; includes cargo; 7-day sample |
 | Cached data in repo | Runs offline, reproducible demo | Needs `--refresh` to update |
 | Text-only history to LLM | Fits free-tier token limits | LLM re-calls tools for detailed follow-ups |
+| Voice = speech input only | Reuses the whole pipeline; tables and numbers read better than they sound | No spoken answers, no real-time voice conversation |
 
 ## 7. Assumptions, uncertainty, scope
 - Enplanements (departing passengers) represent airport demand; connecting vs local passengers are not separated.
 - Flown passengers only: travelers who could not get a seat are invisible → unmet demand is a proxy.
 - Runway counts from OurAirports; movements include only BTS-reporting carriers (no general aviation).
 - Out of scope: construction cost, airport finances, fares, gate counts, local regulation.
+- Voice scope: the bonus is read as "ask by voice"; answers stay as text (they contain tables).
 - Free LLM tier (Groq, 8K tokens/min): the SDK retries on rate limits, then falls back to a smaller model
   (answer is labelled). Answers can take 10-30 s when several questions are asked back to back.
 
@@ -116,5 +120,5 @@ is ≥ 2,500 miles (~4,000 km). The threshold is a parameter the user can change
 
 ## 9. Next steps (if continued)
 Delay data (BTS on-time / FAA) in the Congestion Index · FAA enplanement & capacity reports ·
-weight tuning with analysts · voice input · scenario analysis (e.g. "what if seats grow 10%") ·
+weight tuning with analysts · spoken answers · scenario analysis (e.g. "what if seats grow 10%") ·
 an automated check that every number in an answer appears in the tool output.

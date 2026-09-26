@@ -13,7 +13,7 @@ flowchart TB
     user(["Analyst"])
 
     subgraph interface ["Interface"]
-        ui["Chat UI - app.py<br/>answer + Data and calculations panel"]
+        ui["Chat UI - app.py<br/>text or voice question, answer + Data and calculations panel"]
     end
 
     subgraph ai ["Agent - understands the question and explains the result"]
@@ -81,6 +81,9 @@ Other commands:
 - What is the unmet flight demand in SFO airport and why?
 - Follow-ups: "What if long-haul is 3,000 miles?", "Show SFO's monthly trend", "Only airports above 1M passengers".
 
+Questions can also be asked by voice: record in the sidebar ("Ask by voice"). The recording is transcribed with
+Groq Whisper and handled like a typed question; answers stay as text.
+
 ## Project layout
 
 | File | Role |
@@ -91,8 +94,9 @@ Other commands:
 | `scoring.py` | KPIs, Expansion Score, Congestion Index, unmet demand, route distance mix |
 | `config.py` | All weights, thresholds and regions in one place |
 | `data_sources.py` | Downloads and caches BTS T-100, OurAirports and OpenSky data |
+| `voice.py` | Voice input: speech-to-text with Groq Whisper (bonus) |
 | `cli.py` | Terminal chat and sample runner |
-| `tests/` | Unit tests on synthetic data |
+| `tests/` | Unit tests (scoring on synthetic data, voice with a fake client) |
 
 ## Optional: new OpenSky data
 

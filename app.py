@@ -1,4 +1,5 @@
 """Chat UI. Run with:  streamlit run app.py"""
+import hashlib
 import os
 
 import pandas as pd
@@ -10,6 +11,7 @@ import config
 import data_sources
 import scoring
 import tools
+import voice
 from cli import SAMPLES
 
 st.set_page_config(page_title="Airport Investment Agent", layout="wide")
@@ -38,6 +40,22 @@ with st.sidebar:
         days = sorted({f.stem.split("_")[1] for f in cached_days})
         st.caption(f"Long-haul data: cached OpenSky days for {', '.join(airports)} ({days[0]} to {days[-1]}). "
                    f"Add OpenSky credentials in `.env` to fetch other airports.")
+
+    # Voice input (bonus): a new recording is transcribed once and sent like a typed question
+    st.markdown("**Ask by voice**")
+    recording = st.audio_input("Record a question", label_visibility="collapsed")
+    if recording is not None:
+        audio_bytes = recording.getvalue()
+        recording_id = hashlib.md5(audio_bytes).hexdigest()
+        if recording_id != st.session_state.get("last_recording"):  # skip recordings already handled
+            st.session_state.last_recording = recording_id
+            try:
+                text = voice.transcribe(audio_bytes)
+                if text:
+                    st.session_state.pending = text
+            except Exception as error:
+                st.error(f"Could not transcribe the recording ({type(error).__name__}). Please type the question.")
+
     st.markdown(
         "**How it works**\n"
         "- Numbers come from public data (BTS T-100, OurAirports, OpenSky) and deterministic Python scoring.\n"
