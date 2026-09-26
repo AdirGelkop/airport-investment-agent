@@ -1,45 +1,90 @@
 # Airport Investment Intelligence Agent
 
-Chat agent that helps analysts find US airports where adding terminal / flight capacity is most likely to pay off.
-Numbers come from **public APIs + deterministic Python scoring**; the LLM only picks tools and explains results.
+A chat agent that helps analysts find US airports where adding terminal and flight capacity is most likely to pay off.
+All numbers come from public data and deterministic Python scoring. The LLM only chooses which tool to run and explains the result.
 
-See **[docs/DESIGN.md](docs/DESIGN.md)** for scoring methodology, tradeoffs and where AI is used,
-and **[docs/SAMPLES.md](docs/SAMPLES.md)** for real answers to the example questions (incl. a follow-up).
+- [docs/DESIGN.md](docs/DESIGN.md): scoring methodology, tradeoffs, where AI is used
+- [docs/SAMPLES.md](docs/SAMPLES.md): real answers to the example questions, including a follow-up
+
+## Architecture
+
+```mermaid
+flowchart TB
+    user(["Analyst"])
+
+    subgraph interface ["Interface"]
+        ui["Chat UI - app.py<br/>answer + Data and calculations panel"]
+    end
+
+    subgraph ai ["Agent - understands the question and explains the result"]
+        direction LR
+        agent["Agent loop - agent.py<br/>system prompt, guardrails, retries"]
+        llm["LLM - Groq gpt-oss-120b<br/>picks tools, writes the answer"]
+        agent <--> llm
+    end
+
+    subgraph logic ["Deterministic logic - computes every number"]
+        direction LR
+        tools["6 tools - tools.py"]
+        scoring["Scoring - scoring.py<br/>weights and thresholds in config.py"]
+        tools --> scoring
+    end
+
+    subgraph data ["Public data"]
+        direction LR
+        sources["data_sources.py<br/>BTS T-100 API, OurAirports, OpenSky API"]
+        cache[("Cache - data/cache")]
+        sources --> cache
+    end
+
+    user --> ui --> ai --> logic --> data
+```
+
+1. The analyst asks a question in the chat.
+2. The agent sends it to the LLM with the list of available tools.
+3. The LLM picks a tool (for example `analyze_unmet_demand("SFO")`).
+4. The tool computes the numbers in Python from cached public data.
+5. The LLM writes the answer from those numbers, with assumptions and uncertainty.
+6. The UI shows the answer plus a "Data & calculations" panel with every tool call.
 
 ## Quick start (macOS / Linux, Python 3.9+)
+
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # then put your free Groq key in LLM_API_KEY
+cp .env.example .env          # add a free Groq API key to LLM_API_KEY
 streamlit run app.py          # opens http://localhost:8501
 ```
-The repo ships with a data cache (`data/cache/`), so the app runs without any data download.
-To refresh from the live APIs: `python data_sources.py --refresh`.
 
-Other entry points:
-- `python cli.py` - terminal chat; `python cli.py --samples` runs the 4 example questions
-- `python tools.py` - runs the scoring tools directly (no LLM, no key needed)
-- `python -m pytest -q` - unit tests for the scoring logic
+The data cache is included in the repo, so no download is needed. To refresh it: `python data_sources.py --refresh`.
+
+Other commands:
+- `python cli.py`: chat in the terminal (`--samples` runs the example questions)
+- `python tools.py`: run the scoring tools directly, without the LLM
+- `python -m pytest -q`: unit tests for the scoring logic
 
 ## Example questions
+
 - Which airports in New England are strong candidates for terminal expansion?
 - Compare LA and Santa Ana airport congestion levels.
 - What is the percentage of long haul flights out of Anchorage airport?
 - What is the unmet flight demand in SFO airport and why?
-- Follow-ups: "Why is BDL ranked above PVD?", "Use 3,000 miles as long-haul instead", "Show SFO's monthly trend".
+- Follow-ups: "What if long-haul is 3,000 miles?", "Show SFO's monthly trend", "Only airports above 1M passengers".
 
 ## Project layout
+
 | File | Role |
 |---|---|
-| `data_sources.py` | Fetch + cache public data (BTS T-100, OurAirports, OpenSky) |
-| `scoring.py` | Deterministic KPIs, Expansion Score, Congestion Index, unmet demand, route mix |
-| `config.py` | All weights, thresholds and region definitions in one place |
-| `tools.py` | The 6 functions the LLM may call (JSON in/out) |
-| `agent.py` | LLM tool-calling loop + system prompt (rules: no invented numbers, state assumptions) |
-| `app.py` | Streamlit chat UI with an audit panel per answer |
-| `cli.py` | Terminal chat / sample runner |
+| `app.py` | Streamlit chat UI with a "Data & calculations" panel under each answer |
+| `agent.py` | LLM loop and system prompt (rules: no invented numbers, state assumptions) |
+| `tools.py` | The 6 functions the LLM can call |
+| `scoring.py` | KPIs, Expansion Score, Congestion Index, unmet demand, route distance mix |
+| `config.py` | All weights, thresholds and regions in one place |
+| `data_sources.py` | Downloads and caches BTS T-100, OurAirports and OpenSky data |
+| `cli.py` | Terminal chat and sample runner |
 | `tests/` | Unit tests on synthetic data |
 
-## Optional: live OpenSky data
-Long-haul questions use observed flights from OpenSky Network. Cached days are included; to fetch new days,
-create a free OpenSky account → Account → API client, and put the client id/secret in `.env`.
+## Optional: new OpenSky data
+
+Long-haul questions use observed flights from OpenSky Network. Seven cached days for Anchorage are included.
+To fetch new days, create a free OpenSky account, add an API client, and put its id and secret in `.env`.

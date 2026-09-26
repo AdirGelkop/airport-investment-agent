@@ -11,3 +11,5 @@
 9. **Cache committed to repo** - reviewers can run without data downloads or OpenSky account.
 10. **Text-only chat history to the LLM** - keeps tokens under free-tier limits; follow-ups re-call tools if needed.
 11. **Python 3.9 compatible** - runs on macOS system Python without extra installs.
+12. **Signal thresholds relative to the nation (top 20%)** - fixed thresholds (e.g. "LF > 85%") barely fired on real data, where the max LF is ~86%.
+13. **Rate limits handled in code** - automatic retries, then a smaller fallback model; the answer says when the fallback was used.

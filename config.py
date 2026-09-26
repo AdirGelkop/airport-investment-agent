@@ -1,8 +1,7 @@
-"""Every tunable assumption lives here, so the scoring logic is easy to audit and change."""
+"""All tunable assumptions in one place: data sources, weights, thresholds, regions."""
 
-# ---------- Data sources (public, no key needed except OpenSky) ----------
-# BTS "AFF - T100 Segment Summary By Origin Airport" (monthly, per US origin airport)
-BTS_ENDPOINT = "https://data.bts.gov/resource/r495-tyji.json"
+# Data sources (public; only OpenSky needs a free account)
+BTS_ENDPOINT = "https://data.bts.gov/resource/r495-tyji.json"  # BTS T-100 summary by origin airport
 OURAIRPORTS_AIRPORTS = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 OURAIRPORTS_RUNWAYS = "https://davidmegginson.github.io/ourairports-data/runways.csv"
 OPENSKY_TOKEN_URL = (
@@ -10,43 +9,38 @@ OPENSKY_TOKEN_URL = (
 )
 OPENSKY_API = "https://opensky-network.org/api"
 
-# ---------- Scope ----------
-# FAA "primary" commercial-service airports have > 10,000 enplanements per year.
-# Only these airports form the comparison universe for percentiles.
+# Which airports are compared: FAA "primary" airports have over 10,000 enplanements a year
 MIN_ENPLANEMENTS = 10_000
-MIN_RUNWAY_LENGTH_FT = 3_000  # ignore helipads / very short strips when counting runways
+MIN_RUNWAY_LENGTH_FT = 3_000  # ignore helipads and very short strips
 
-# ---------- Expansion Score (0-100) ----------
-# Weighted average of percentile ranks vs. all US primary airports.
+# Expansion Score = weighted average of national percentiles (weights sum to 1)
 EXPANSION_WEIGHTS = {
-    "scale": 0.20,          # passenger volume (bigger base = bigger revenue pool)
-    "load_factor": 0.25,    # how full flights are (demand pressing on capacity)
-    "pax_growth": 0.20,     # passenger momentum, last 12m vs prior 12m
-    "supply_gap": 0.20,     # passenger growth minus seat growth (demand outpacing supply)
-    "runway_strain": 0.15,  # est. aircraft movements per runway per day
+    "scale": 0.20,          # passenger volume
+    "load_factor": 0.25,    # how full the flights are
+    "pax_growth": 0.20,     # passenger growth, last 12 months vs prior 12
+    "supply_gap": 0.20,     # passenger growth minus seat growth
+    "runway_strain": 0.15,  # aircraft movements per runway per day
 }
 
-# Congestion Index (0-100) = simple average of these percentile ranks
+# Congestion Index = simple average of these percentiles
 CONGESTION_COMPONENTS = ["load_factor", "peak_load_factor", "runway_strain"]
 
-# ---------- Unmet-demand logic ----------
-TARGET_LOAD_FACTOR = 0.80   # "comfortable" load factor used to size missing capacity
-HIGH_PERCENTILE = 80        # signal thresholds are relative: "top 20% nationally"
+# Unmet demand
+TARGET_LOAD_FACTOR = 0.80  # seats are "enough" when flights are 80% full
+HIGH_PERCENTILE = 80       # a signal is "high" when it is in the national top 20%
 
-# ---------- Route distance ----------
-# Long-haul default ~ 4,000 km (Eurocontrol-style market segment), in statute miles.
-LONG_HAUL_MILES = 2_500
+# Route distance (statute miles)
+LONG_HAUL_MILES = 2_500    # about 4,000 km
 SHORT_HAUL_MILES = 800
 OPENSKY_DAYS = 7
 
-# ICAO callsign prefixes of well-known all-cargo operators (used only to show a
-# "excluding known cargo operators" split; not exhaustive).
+# Callsign prefixes of known all-cargo airlines (not a complete list)
 CARGO_CALLSIGN_PREFIXES = {
     "FDX", "UPS", "GTI", "CKS", "CLX", "NCA", "ABX", "ATN", "PAC", "CKK", "CAO",
     "AER", "NAC", "ABW", "BCS", "BOX", "GEC", "MPH", "SQC", "WGN", "NCR", "KYE", "CSS", "YZR", "AHK",
 }
 
-# ---------- Regions (US Census divisions + a few common names) ----------
+# Regions = US Census divisions, plus "West Coast"
 REGIONS = {
     "New England": ["CT", "ME", "MA", "NH", "RI", "VT"],
     "Mid-Atlantic": ["NJ", "NY", "PA"],

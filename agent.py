@@ -1,9 +1,8 @@
-"""LLM tool-calling loop. The LLM chooses tools and explains results; it never computes numbers itself."""
+"""The agent loop: the LLM picks tools and explains their results. It never computes numbers itself."""
 from __future__ import annotations
 
 import json
 import os
-from typing import Dict, List, Tuple
 
 from dotenv import load_dotenv
 from openai import OpenAI, RateLimitError
@@ -45,61 +44,66 @@ METHODOLOGY (for explaining, do not recompute)
 """
 
 MAX_STEPS = 6
-HISTORY_MESSAGES = 4  # last 2 exchanges: enough for follow-ups, small enough for free-tier token limits
+HISTORY_MESSAGES = 4  # last 2 question/answer pairs: enough for follow-ups, fits free-tier limits
 
 
-def _client() -> Tuple[OpenAI, str]:
+def create_client() -> tuple[OpenAI, str]:
     key = os.getenv("LLM_API_KEY")
     if not key:
         raise RuntimeError("LLM_API_KEY is missing. Copy .env.example to .env and add your key.")
-    base = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+    base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
     model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
-    # max_retries: the SDK backs off and retries automatically on 429 rate limits
-    return OpenAI(api_key=key, base_url=base, max_retries=5), model
+    # max_retries: on a rate-limit error (429) the SDK waits and retries by itself
+    return OpenAI(api_key=key, base_url=base_url, max_retries=5), model
 
 
-def _complete(client: OpenAI, model: str, messages: List[Dict]):
-    """One LLM call; on a persistent rate limit, retry once with the fallback model."""
-    kwargs = dict(messages=messages, tools=tools.SCHEMAS, tool_choice="auto", temperature=0.1)
+def call_llm(client: OpenAI, model: str, messages: list[dict]):
+    """One LLM call. If the rate limit still blocks us after retries, use the fallback model.
+    Returns (response, model that answered)."""
+    request = dict(messages=messages, tools=tools.SCHEMAS, tool_choice="auto", temperature=0.1)
     try:
-        return client.chat.completions.create(model=model, **kwargs), model
+        return client.chat.completions.create(model=model, **request), model
     except RateLimitError:
         fallback = os.getenv("LLM_FALLBACK_MODEL", "openai/gpt-oss-20b")
         if not fallback or fallback == model:
             raise
-        return client.chat.completions.create(model=fallback, **kwargs), fallback
+        return client.chat.completions.create(model=fallback, **request), fallback
 
 
-def ask(history: List[Dict[str, str]]) -> Tuple[str, List[Dict]]:
-    """history = [{"role": "user"|"assistant", "content": str}, ...] (text only, keeps tokens low).
-    Returns (answer_markdown, trace) where trace lists every tool call with args and result."""
-    client, model = _client()
-    messages: List[Dict] = [{"role": "system", "content": SYSTEM_PROMPT}] + history[-HISTORY_MESSAGES:]
-    trace: List[Dict] = []
-    used_models = set()
+def ask(history: list[dict]) -> tuple[str, list[dict]]:
+    """Answer the last user message.
+    history: [{"role": "user" or "assistant", "content": text}, ...]
+    Returns (answer in markdown, trace = every tool call with its arguments and result)."""
+    client, model = create_client()
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history[-HISTORY_MESSAGES:]
+    trace = []
+    fallback_used = None
 
-    for _ in range(MAX_STEPS):
-        resp, used = _complete(client, model, messages)
-        used_models.add(used)
-        msg = resp.choices[0].message
-        if not msg.tool_calls:
-            answer = msg.content or ""
-            if used_models - {model}:
-                answer += f"\n\n_(Answered with fallback model {', '.join(used_models - {model})} due to rate limits.)_"
+    for _ in range(MAX_STEPS):  # each step: the LLM either asks for tools or gives the final answer
+        response, answered_by = call_llm(client, model, messages)
+        if answered_by != model:
+            fallback_used = answered_by
+        message = response.choices[0].message
+
+        if not message.tool_calls:  # final answer
+            answer = message.content or ""
+            if fallback_used:
+                answer += f"\n\n_(Answered with fallback model {fallback_used} due to rate limits.)_"
             return answer, trace
 
-        messages.append({"role": "assistant", "content": msg.content or "", "tool_calls": [
-            {"id": tc.id, "type": "function",
-             "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
-            for tc in msg.tool_calls]})
-        for tc in msg.tool_calls:
+        # The LLM asked for tools: run each one and send the results back
+        messages.append({"role": "assistant", "content": message.content or "", "tool_calls": [
+            {"id": call.id, "type": "function",
+             "function": {"name": call.function.name, "arguments": call.function.arguments}}
+            for call in message.tool_calls]})
+        for call in message.tool_calls:
             try:
-                args = json.loads(tc.function.arguments or "{}")
+                args = json.loads(call.function.arguments or "{}")
             except json.JSONDecodeError:
                 args = {}
-            result = tools.run_tool(tc.function.name, args)
-            trace.append({"tool": tc.function.name, "args": args, "result": result})
-            messages.append({"role": "tool", "tool_call_id": tc.id,
+            result = tools.run_tool(call.function.name, args)
+            trace.append({"tool": call.function.name, "args": args, "result": result})
+            messages.append({"role": "tool", "tool_call_id": call.id,
                              "content": json.dumps(result, default=str, separators=(",", ":"))})
 
     return "I could not finish within the tool-call limit. Please narrow the question.", trace

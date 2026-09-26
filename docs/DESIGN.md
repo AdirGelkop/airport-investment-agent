@@ -7,22 +7,38 @@ that is busy. The agent turns that idea into transparent KPIs, ranks airports on
 interrogate the result in chat.
 
 ## 2. Architecture
+The high-level view is in the [README](../README.md#architecture). Below is the flow of one question,
+showing where the numbers are computed and where the guardrails sit.
+
+```mermaid
+sequenceDiagram
+    actor User as Analyst
+    participant UI as app.py (chat UI)
+    participant Agent as agent.py
+    participant LLM as LLM (Groq)
+    participant Tools as tools.py
+    participant Scoring as scoring.py
+
+    User->>UI: What is the unmet flight demand in SFO and why?
+    UI->>Agent: ask(last messages)
+    Agent->>LLM: system prompt + question + 6 tool schemas
+    LLM-->>Agent: call analyze_unmet_demand(code=SFO)
+    Agent->>Tools: run_tool(name, args)
+    Tools->>Scoring: unmet_capacity(), unmet_signals()
+    Scoring-->>Tools: numbers + plain-language signals
+    Tools-->>Agent: JSON with numbers, data window, caveats
+    Agent->>LLM: tool result
+    LLM-->>Agent: final answer, quoting the tool numbers
+    Agent-->>UI: answer + trace of tool calls
+    UI-->>User: answer + Data and calculations panel
 ```
- Streamlit chat (app.py) / CLI (cli.py)
-            │  question + text history
-            ▼
- agent.py  ── LLM (Groq, OpenAI-compatible) ── decides which tool(s) to call
-            │  tool call (JSON args)                ▲ explains tool results
-            ▼                                       │
- tools.py  ── 6 tools: find_airports, rank_airports, compare_airports,
-            │         analyze_unmet_demand, route_distance_mix, monthly_trend
-            ▼
- scoring.py ── deterministic KPIs, percentiles, scores (unit-tested)   config.py (all weights/thresholds)
-            ▼
- data_sources.py ── public APIs → CSV/JSON cache (data/cache/)
-     BTS T-100 (Socrata API) · OurAirports (CSV) · OpenSky Network (REST, OAuth2)
-```
-Every answer shows a **"Data & calculations"** panel with the exact tool calls and returned numbers.
+
+Guardrails in this flow:
+- **System prompt:** every number must come from a tool result; no own arithmetic; missing data is not zero;
+  every answer ends with assumptions and uncertainty.
+- **Tools:** return full totals (so the LLM has nothing to calculate) and an explicit `NO_DATA` status.
+- **UI:** the trace of every tool call is shown under the answer, so an analyst can check each number.
+- **Rate limits:** the SDK retries automatically, then a smaller fallback model answers (the answer says so).
 
 ## 3. Data sources
 | Source | What we use | Notes |
