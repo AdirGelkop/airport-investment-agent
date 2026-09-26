@@ -86,5 +86,5 @@ Other commands:
 
 ## Optional: new OpenSky data
 
-Long-haul questions use observed flights from OpenSky Network. Seven cached days for Anchorage are included.
+Long-haul questions use observed flights from OpenSky Network. Cached days for Anchorage (ANC) and San Francisco (SFO) are included.
 To fetch new days, create a free OpenSky account, add an API client, and put its id and secret in `.env`.

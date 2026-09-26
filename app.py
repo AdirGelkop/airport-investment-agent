@@ -47,7 +47,7 @@ with st.sidebar:
         st.session_state.messages = []
     st.caption(f"Model: {os.getenv('LLM_MODEL', 'openai/gpt-oss-120b')}")
 
-# Data & calculations window - showing 
+# Audit panel shown under each answer
 def show_trace(trace):
     """The audit panel under an answer: every tool call, its arguments and its result."""
     with st.expander(f"Data & calculations ({len(trace)} tool calls)"):
