@@ -47,6 +47,16 @@ flowchart TB
 5. The LLM writes the answer from those numbers, with assumptions and uncertainty.
 6. The UI shows the answer plus a "Data & calculations" panel with every tool call.
 
+## Screenshots
+
+An answer to one of the example questions:
+
+![Answer](docs/screenshots/answer.png)
+
+The "Data & calculations" panel under the same answer: the exact tool call and the numbers the code returned.
+
+![Audit panel](docs/screenshots/audit_panel.png)
+
 ## Quick start (macOS / Linux, Python 3.9+)
 
 ```bash
