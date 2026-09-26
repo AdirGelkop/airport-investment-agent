@@ -7,6 +7,7 @@ from datetime import date
 
 import agent
 
+# SAMPLE Questions
 SAMPLES = [
     "Which airports in New England are strong candidates for terminal expansion?",
     "Compare LA and Santa Ana airport congestion levels.",
